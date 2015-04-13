@@ -1,4 +1,5 @@
 #pragma once
+#include "stdio.h"
 
 #define FLOAT_TYPE       double
 #define ILU_OK                 0
@@ -27,4 +28,22 @@ struct crsMatrix
   int* Col;
   // Массив индексов строк (размер N + 1)
   int* RowIndex; 
+  ~crsMatrix()
+  {
+	  if (Value!=NULL)
+	  {
+		  delete[] Value;
+		  Value = NULL;
+	  }
+	  if (Col!=NULL)
+	  {
+		  delete[] Col;
+		  Col = NULL;
+	  }
+	  if (RowIndex!=NULL)
+	  {
+		  delete[] RowIndex;
+		  RowIndex = NULL;
+	  }
+  }
 };

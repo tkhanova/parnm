@@ -16,7 +16,7 @@
  * RETURN
  *   матрица в плотном виде
  **/
-double * CRStoGeneral(crsMatrix A);
+double * CRStoGeneral(crsMatrix &A);
 
 /**
  * API
@@ -29,7 +29,7 @@ double * CRStoGeneral(crsMatrix A);
  * RETURN
  *   число обусловлености 
  **/
-double getConditionNumber(crsMatrix A);
+double getConditionNumber(crsMatrix &A);
 
 /**
  * API
@@ -45,7 +45,7 @@ double getConditionNumber(crsMatrix A);
  * RETURN
  *   умноженная матрица 
  **/
-double getConditionNumber(crsMatrix L, crsMatrix U, crsMatrix A);
+double getConditionNumber(crsMatrix &L, crsMatrix &U, crsMatrix &A);
 
 
 

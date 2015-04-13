@@ -14,7 +14,7 @@
  *   crsMatrix &U   - отделенная матрица U
  * RETURN
  */
-void LUmatrixSeparation(crsMatrix ilu, int *uptr, crsMatrix &L, crsMatrix &U)
+void LUmatrixSeparation(const crsMatrix &ilu, int *uptr, crsMatrix &L, crsMatrix &U)
 {
   int countL, countU;
   int i, j, s, f, k;

@@ -61,7 +61,7 @@ double MatrixNormI(double* Matrix, int size)
  * RETURN
  *   матрица в плотном виде
  **/
-double * CRStoGeneral(crsMatrix A)
+double * CRStoGeneral(crsMatrix &A)
 {
   int i, j, s, f;
   double * mat;
@@ -90,7 +90,7 @@ double * CRStoGeneral(crsMatrix A)
  * RETURN
  *   число обусловлености 
  **/
-double getConditionNumber(crsMatrix A)
+double getConditionNumber(crsMatrix& A)
 {
   // вспомогательные переменные
   double *Matrix;
@@ -144,7 +144,7 @@ double getConditionNumber(crsMatrix A)
  * RETURN
  *   умноженная матрица 
  **/
-double* multInvMatMat(crsMatrix TrMat, char tr, double *Matrix)
+double* multInvMatMat(crsMatrix &TrMat, char tr, double *Matrix)
 {
   double *c;
   char transa = 'N';
@@ -181,7 +181,7 @@ double* multInvMatMat(crsMatrix TrMat, char tr, double *Matrix)
  * RETURN
  *   число обусловлености 
  **/
-double getConditionNumber(crsMatrix L, crsMatrix U, crsMatrix A)
+double getConditionNumber(crsMatrix &L, crsMatrix &U, crsMatrix &A)
 {
     // вспомогательные переменные
   double *Matrix, *tmpMatrix;

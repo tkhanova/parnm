@@ -1,6 +1,6 @@
 #include "ilup.h"
 #include "queue.h"
-
+#include <omp.h>
 using namespace std;
 
 
@@ -33,7 +33,7 @@ int symbolicILUp(int p, int n, int * col, int * row,
                  int * &lucol, int * &lurow, double * &luval,
                  int * uptr, int &countL, int &countU)
 {
-  int i, j, h, s, f;   // счетчики циклов 
+  int h, s, f;   // счетчики циклов 
   int jcol;            // и временные переменные
   //queue<int> Q;
   MyQueue Q;
@@ -47,27 +47,33 @@ int symbolicILUp(int p, int n, int * col, int * row,
   countL = 0;
   countU = 0;
 
-  for(j = 0; j < n; j++)
+  for(int j = 0; j < n; j++)
   {
     visited[j] = -1;
     adj[j] = 0;
   }
-  for(i = 0; i < n; i++)
+  int tmp=0;
+//#pragma omp parallel for reduction(+:tmp)  private(h, s, jcol, f)
+  for(int i = 0; i < n; i++)
   {
+	  MyQueue Q;
+	  Q.init(2*p+1); 
+
     Q.push(i);
     len[i] = 0;
     visited[i] = i;
-    while(!(Q.empty()))
+    while(!Q.empty())
     {
       h = Q.pop();
       s = row[h];
       f = row[h + 1];
-      for(j = s; j < f; j++)
+      for(int j = s; j < f; j++)
       {
         jcol = col[j];
         if(visited[jcol] != i)
         {
-          visited[jcol] = i;
+//#pragma omp critical
+			{visited[jcol] = i;}
           if((jcol > i) && (len[h]<p))
           {
 			  Q.push(jcol);
@@ -75,35 +81,36 @@ int symbolicILUp(int p, int n, int * col, int * row,
           }
           if(jcol < i)
           {
-            countL++;
+            tmp++;
             adj[i]++;
           }
         }
       }
     }
   }
-
-  for(i = 0; i < n; i++)
+  countL = tmp;
+  for(int i = 0; i < n; i++)
   {
-    s = row[i];
-    f = row[i + 1];
-    for(j = s; (j < f) && (col[j] < i); j++);
-    uptr[i] = j;
-    if(col[uptr[i]] != i)
-    {
-      return -(i + 1);
-    }
-    countU += (f - j);
-    adj[i] += (f - j);
+	  s = row[i];
+	  f = row[i + 1];
+	  int j;
+	  for(j = s; (j < f) && (col[j] < i); j++);
+	  uptr[i] = j;
+	  if(col[uptr[i]] != i)
+	  {
+		  return -(i + 1);
+	  }
+	  countU += (f - j);
+	  adj[i] += (f - j);
   }
 
   if(lucol != NULL)
   {
-    delete []lucol;
+	  delete []lucol;
   }
   if(lurow != NULL)
   {
-    delete []lurow;
+	  delete []lurow;
   }
   if(luval != NULL)
   {
@@ -117,28 +124,34 @@ int symbolicILUp(int p, int n, int * col, int * row,
   memset(luval, 0, (countL + countU) * sizeof (double));
 
   lurow[0] = 0;
-  for(i = 0; i < n; i++)
+  for(int i = 0; i < n; i++)
   {
     lurow[i + 1] = lurow[i] + adj[i];
-    adj[i] = 0;
+    //adj[i] = 0;
   }
+  memset(adj, 0, n * sizeof (int));
 
-  for(i = 0; i < n; i++)
+//#pragma omp parallel for  private(h, s, jcol, f)
+  for(int i = 0; i < n; i++)
   {
+	  MyQueue Q;
+	  Q.init(2*p+1); 
 	  Q.push(i);
-    len[i] = 0;
-    visited[i] = i;
-    while(!(Q.empty()))
+	  len[i] = 0;
+//#pragma omp critical
+	  {visited[i] = i;}
+    while(!Q.empty())
     {
       h = Q.pop();
       s = row[h];
       f = row[h + 1];
-      for(j = s; j < f; j++)
+      for(int j = s; j < f; j++)
       {
         jcol = col[j];
         if(visited[jcol] != i)
         {
-          visited[jcol] = i;
+//#pragma omp critical
+			{visited[jcol] = i;}
           if((jcol > i) && (len[h]<p))
           {
 			  Q.push(jcol);
@@ -156,7 +169,7 @@ int symbolicILUp(int p, int n, int * col, int * row,
     s = uptr[i];
     f = row[i + 1];
     uptr[i] = lurow[i] + adj[i];
-    for(j = s; j < f; j++)
+    for(int j = s; j < f; j++)
     {
       lucol[lurow[i] + adj[i]] = col[j];
       adj[i]++;
@@ -168,13 +181,16 @@ int symbolicILUp(int p, int n, int * col, int * row,
   int *tRow;
   StructTranspose(n, lucol, lurow, tCol, tRow);
   delete []lucol;
+  lucol = NULL;
   delete []lurow;
+  lurow = NULL;
   StructTranspose(n, tCol, tRow, lucol, lurow);
   delete []tCol;
   delete []tRow;
 
   delete[] len;
   delete[] adj;
+  delete[] visited;
 
   return ILU_OK;
 }

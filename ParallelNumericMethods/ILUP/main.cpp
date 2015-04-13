@@ -127,8 +127,15 @@ int main(int argc, char **argv)
       PrintMatrixInNormalView(&U);
     #endif
       PrintMatrixInNormalView(&M);
-    #endif
+	#endif
+
+	  FreeMatrix(M);
+	  FreeMatrix(lu);
+	  FreeMatrix(L);
+	  FreeMatrix(U);
   }
+
+  delete[] uptr;
 
   return 0;
 }

@@ -18,6 +18,9 @@ void FreeMatrix(crsMatrix &mtx)
   delete [] mtx.Value;
   delete [] mtx.Col;
   delete [] mtx.RowIndex;
+  mtx.Value = NULL;
+  mtx.Col = NULL;
+  mtx.RowIndex = NULL;
 }
 
 // —оздает копию imtx в omtx, выдел€€ пам€ть под пол€ Value, Col и RowIndex
