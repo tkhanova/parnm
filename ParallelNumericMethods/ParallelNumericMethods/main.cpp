@@ -3,216 +3,12 @@
 #include <algorithm>
 #include <iostream>
 #include <queue>
+#include <mkl.h>
+#include "conditionNumber.h"
+#include "crs_general.h"
 
 using namespace std;
 
-void sort ( int *col_idx, double *a, int start, int end ) {
-    int i, j, it;
-    double dt;
-    
-    for ( i = end - 1; i > start; i-- )
-        for ( j = start; j < i; j++ )
-            if ( col_idx[j] > col_idx[j + 1] ) {
-                if ( a ) {
-                    dt = a[j];
-                    a[j] = a[j + 1];
-                    a[j + 1] = dt;
-                }
-                
-                it = col_idx[j];
-                col_idx[j] = col_idx[j + 1];
-                col_idx[j + 1] = it;
-            }
-}
-
-/**
- * API
- *   int StructTranspose(int n, int* column, int* row,
- *                       int* &tColumn, int* &tRow);
- *   Транспонирование структуры матрицы
- * INPUT
- *   int  n        - размер матрицы
- *   int* column   - CRS описание матрицы
- *   int* row
- * OUTPUT
- *   int* &tColumn - CRS описание матрицы
- *   int* &tRow
- * RETURN
- * возвращается код ошибки
-**/
-int StructTranspose ( int n, int* column, int* row, int* &tColumn, int* &tRow ) {
-    int i, j;
-    int nz;
-    int S;
-    nz = row[n];
-    tColumn = new int [nz];
-    tRow    = new int [n + 1];
-    memset ( tRow, 0, ( n + 1 ) * sizeof ( int ) );
-    
-    for ( i = 0; i < nz; i++ ) {
-        tRow[column[i] + 1]++;
-    }
-    
-    S = 0;
-    
-    for ( i = 1; i <= n; i++ ) {
-        int tmp = tRow[i];
-        tRow[i] = S;
-        S = S + tmp;
-    }
-    
-    for ( i = 0; i < n; i++ ) {
-        int j1 = row[i];
-        int j2 = row[i + 1];
-        int Col = i; // Столбец в AT - строка в А
-        
-        for ( j = j1; j < j2; j++ ) {
-            int RIndex = column[j];  // Строка в AT
-            int IIndex = tRow[RIndex + 1];
-            tColumn[IIndex] = Col;
-            tRow   [RIndex + 1]++;
-        }
-    }
-    
-    return 0;
-}
-
-/* converts COO format to CSR format, in-place,
-if SORT_IN_ROW is defined, each row is sorted in column index.
-On return, i_idx contains row_start position */
-
-void coo2csr_in ( int n, int nz, double *a, int *i_idx, int *j_idx ) {
-    int *row_start;
-    int i, j;
-    int init, i_next, j_next, i_pos;
-    double dt, a_next;
-    row_start = ( int * ) malloc ( ( n + 1 ) * sizeof ( int ) );
-    
-    if ( !row_start ) {
-        printf ( "coo2csr_in: cannot allocate temporary memory\n" );
-        exit ( 1 );
-    }
-    
-    for ( i = 0; i <= n; i++ ) row_start[i] = 0;
-    
-    /* determine row lengths */
-    for ( i = 0; i < nz; i++ ) row_start[i_idx[i] + 1]++;
-    
-    for ( i = 0; i < n; i++ ) row_start[i + 1] += row_start[i];
-    
-    for ( init = 0; init < nz; ) {
-        dt = a[init];
-        i = i_idx[init];
-        j = j_idx[init];
-        i_idx[init] = -1;
-        
-        while ( 1 ) {
-            i_pos = row_start[i];
-            a_next = a[i_pos];
-            i_next = i_idx[i_pos];
-            j_next = j_idx[i_pos];
-            a[i_pos] = dt;
-            j_idx[i_pos] = j;
-            i_idx[i_pos] = -1;
-            row_start[i]++;
-            
-            if ( i_next < 0 ) break;
-            
-            dt = a_next;
-            i = i_next;
-            j = j_next;
-        }
-        
-        init++;
-        
-        while ( ( i_idx[init] < 0 ) && ( init < nz ) )  init++;
-    }
-    
-    /* shift back row_start */
-    for ( i = 0; i < n; i++ ) i_idx[i + 1] = row_start[i];
-    
-    i_idx[0] = 0;
-    
-    for ( i = 0; i < n; i++ ) {
-        sort ( j_idx, a, i_idx[i], i_idx[i + 1] );
-    }
-}
-
-
-struct CRS {
-    double * val;
-    int * col_ind;
-    int * row_ptr;
-    
-    int N, NZ;
-    
-    CRS ( char * filename ) {
-        std::ifstream fin ( filename );
-        
-        while ( fin.peek() == '%' ) fin.ignore ( 2048, '\n' );
-        
-        fin >>  N >> N >> NZ;
-        cout << N << " " << NZ << endl;
-        val = new double[NZ];
-        col_ind = new int[NZ];
-        row_ptr = new int[NZ];
-        
-        // Read the data in coo
-        for ( int i = 0; i < NZ; i++ )  {
-            fin >> row_ptr[i] >> col_ind[i] >> val[i];
-            cout << row_ptr[i] << " " << col_ind[i] << " " << val[i] << endl;
-            row_ptr[i] -= 1;  /* adjust from 1-based to 0-based */
-            col_ind[i] -= 1;
-        }
-        
-        fin.close();
-        coo2csr_in ( N, NZ, val, row_ptr, col_ind );
-        
-        for ( int i = 0; i < NZ; i++ )  {
-            cout << val[i] << " ";
-        }
-        
-        cout << endl;
-        
-        for ( int i = 0; i < NZ; i++ )  {
-            cout << col_ind[i] << " ";
-        }
-        
-        cout << endl;
-        
-        for ( int i = 0; i < N + 1; i++ )  {
-            cout << row_ptr[i] << " ";
-        }
-        
-        cout << endl;
-    }
-    
-    CRS() : N ( 0 ), NZ ( 0 ) {}
-    
-    ~CRS() {
-        delete[] val;
-        delete[] col_ind;
-        delete[] row_ptr;
-    }
-};
-
-ostream & operator<< ( ostream & s, const CRS & m ) {
-    for ( int i = 0; i < m.NZ; i++ )
-        s << m.val[i] << " ";
-        
-    s << endl;
-    
-    for ( int i = 0; i < m.NZ; i++ )
-        s << m.col_ind[i] << " ";
-        
-    s << endl;
-    
-    for ( int i = 0; i < m.N + 1; i++ )
-        s << m.row_ptr[i] << " ";
-        
-    s << endl;
-    return s;
-}
 
 /** * API * int symbolicILUp(int p, int n, int * col, int * row, * int * lucol, int * lurow, double * &luval, * int * uptr, int &countL, int &countU);
 * символическая фаза ILU(p) * INPUT * int n - размер матрицы * матрица A * int * col - индексы колонок матрицы a * int * row - индексы начала строк матрицы a
@@ -431,9 +227,224 @@ int numericalILUp ( int n, double * a, int * col, int * row, int * lucol, int * 
 }
 
 
+/**
+ * API
+ *  void ProductSparseMatrix (CRS &A,  CRS &B, 
+ *                            CRS &C);
+ *  умножение разреженных матриц C = A * B
+ * INPUT
+ *   CRS &A   - матрица A
+ *   CRS &B   - матрица B
+ * OUTPUT
+ *   CRS &C   - C = A * B
+ * RETURN
+ */
+void ProductSparseMatrix(CRS &A, CRS &B, CRS &C)
+{
+  int n = A.N;
 
-void ILUp ( int p, CRS & matrix, CRS & LU ) {
-    int * upptr = new int[matrix.N];
+  // Настроим параметры для вызова функции MKL
+  // Переиндексируем матрицы A и B с единицы
+  int i, j;
+  for (i = 0; i < A.NZ; i++)
+    A.col_ind[i]++;
+  for (i = 0; i < B.NZ; i++)
+    B.col_ind[i]++;
+  for (j = 0; j <= n; j++)
+  {
+    A.row_ptr[j]++;
+    B.row_ptr[j]++;
+  }
+
+  // Используется функция, вычисляющая C = op(A) * B
+  char trans = 'N'; // говорит о том, op(A) = A - не нужно транспонировать A
+
+// Хитрый параметр, влияющий на то, как будет выделяться память
+// request = 0: память для результирующей матрицы д.б. выделена заранее
+// Если мы не знаем, сколько памяти необходимо для зранения результата,
+// необходимо:
+// 1) выделить память для массива индексов строк ic: "Кол-во строк+1" элементов;
+// 2) вызвать функцию с параметром request = 1 - в массиве ic будет заполнен 
+//                                                         последний элемент
+// 3) выделить память для массивов c и jc 
+//    (кол-во элементов = ic[Кол-во строк]-1)
+// 4) вызвать функцию с параметром request = 2
+  int request;
+
+// Еще один нетривиальный момент: есть возможность настроить, нужно ли 
+// упорядочивать матрицы A, B и C. У нас предполагается, что все матрицы
+// упорядочены, следовательно, выбираем вариант "No-No-Yes", который
+// соответствует любому значению, кроме целых чисел от 1 до 7 включительно
+  int sort = 8;
+
+// Количество ненулевых элементов.
+// Используется только если request = 0
+  int nzmax = -1;
+
+// Служебная информация
+  int info;
+
+// Выделим память для индекса в матрице C
+  C.row_ptr = new int[n + 1];
+// Сосчитаем количество ненулевых элементов в матрице C
+  request = 1;
+  C.val = 0;
+  C.col_ind = 0;
+  mkl_dcsrmultcsr(&trans, &request, &sort, &n, &n, &n, A.val, A.col_ind, 
+                  A.row_ptr, B.val, B.col_ind, B.row_ptr, C.val, C.col_ind,
+                  C.row_ptr, &nzmax, &info);
+  int nzc = C.row_ptr[n] - 1;
+  C.val = new double[nzc];
+  C.col_ind   = new int[nzc];
+// Сосчитаем C = A * B
+  request = 2;
+  mkl_dcsrmultcsr(&trans, &request, &sort, &n, &n, &n, A.val, A.col_ind,
+                  A.row_ptr, B.val, B.col_ind, B.row_ptr, C.val, C.col_ind,
+                  C.row_ptr, &nzmax, &info);
+  C.N = n;
+  C.NZ = nzc;
+
+  // Приведем к нормальному виду матрицы A, B и С
+  for (i = 0; i < A.NZ; i++)
+    A.col_ind[i]--;
+  for (i = 0; i < B.NZ; i++)
+    B.col_ind[i]--;
+  for (i = 0; i < C.NZ; i++)
+    C.col_ind[i]--;
+  for (j = 0; j <= n; j++)
+  {
+    A.row_ptr[j]--;
+    B.row_ptr[j]--;
+    C.row_ptr[j]--;
+  }
+}
+
+/**
+ * API
+ *  double MatrixCompare (CRS &A,  CRS &M);
+ *  подсчет степени отличия матриц
+ * INPUT
+ *   CRS &A   - исходная матрица
+ *   CRS &M   - предобуславлевотель
+ * OUTPUT
+ *   
+ * RETURN
+ *  степень отличия
+ */
+double MatrixCompare (CRS &A,  CRS &M)
+{
+  double diff = 0.0;
+    int i, j, fA, fM;
+  i = 0;
+  j = 0;
+  int k;
+  
+  if(A.N != M.N)
+  {
+    return -1.0;
+  }
+
+  if(M.NZ < A.NZ)
+  {
+    return -2.0;
+  }
+
+  for(k = 0; k < A.N; k++)
+  {
+    i  = M.row_ptr[k];
+    fM = M.row_ptr[k + 1];
+    j  = A.row_ptr[k];
+    fA = A.row_ptr[k + 1];
+    while((i < fM) && (j<fA))
+    {
+      if(M.col_ind[i] != A.col_ind[j])
+      {
+        i++;
+      } 
+      else 
+      {
+        if(diff < fabs(M.val[i] - A.val[j]))
+        {
+          diff =  fabs(M.val[i] - A.val[j]);
+        }
+        j++;
+        i++;
+      }
+    }
+  }
+  return diff; 
+}
+
+/**
+ * API
+ *  void LUmatrixSeparation (CRS ilu, int *uptr, 
+ *                           CRS &L, CRS &U);
+ *  разделение матрицы на L и U матрицы
+ * INPUT
+ *   CRS ilu  - матрицы ilu в одной структуре
+ *   int    * uptr  - индексы диагональных элементов
+ *                    в массиве значений ilu
+ * OUTPUT
+ *   CRS &L   - отделенная матрица L
+ *   CRS &U   - отделенная матрица U
+ * RETURN
+ */
+void LUmatrixSeparation(CRS ilu, int *uptr, CRS &L, CRS &U)
+{
+  int countL, countU;
+  int i, j, s, f, k;
+  double *val;
+  int    *col;
+  countU = 0;
+  for(i = 0; i < ilu.N; i++)
+  {
+    countU += (ilu.row_ptr[i+1] - uptr[i]);
+  }
+  countL = ilu.NZ + ilu.N - countU;
+  InitializeMatrix(ilu.N, countL, L);
+  InitializeMatrix(ilu.N, countU, U);
+  // fill L matrix
+  k = 0;
+  val = L.val;
+  col = L.col_ind;
+  L.row_ptr[0] = k;
+  for(i = 0; i < ilu.N; i++)
+  {
+    s = ilu.row_ptr[i];
+    f = uptr[i];
+    for(j = s; j < f; j++)
+    {
+      val[k] = ilu.val[j];
+      col[k] = ilu.col_ind[j];
+      k++;
+    }
+    val[k] = 1.0;
+    col[k] = i;
+    k++;
+    L.row_ptr[i + 1] = k;
+  }
+  // fill U matrix
+  k = 0;
+  val = U.val;
+  col = U.col_ind;
+  U.row_ptr[0] = k;
+  for(i = 0; i < ilu.N; i++)
+  {
+    s = uptr[i];
+    f = ilu.row_ptr[i + 1];
+    for(j = s; j < f; j++)
+    {
+      val[k] = ilu.val[j];
+      col[k] = ilu.col_ind[j];
+      k++;
+    }
+    U.row_ptr[i + 1] = k;
+  }
+}
+
+
+void ILUp ( int p, CRS & matrix, CRS & LU , int*& upptr) {
+    //int * upptr = new int[matrix.N];
     int countL, countU;
     symbolicILUp ( p, matrix.N, matrix.col_ind, matrix.row_ptr, LU.col_ind, LU.row_ptr, LU.val, upptr, countL, countU );
     LU.N = matrix.N;
@@ -449,7 +460,28 @@ int main ( int argv, char *argc[] ) {
     cout << matrix << endl;
     CRS LU;
     int p = 2;  // should be less than N
-    ILUp ( p, matrix, LU );
+	int* upptr = new int[matrix.N];
+    ILUp ( p, matrix, LU, upptr);
+
+	CRS L,U,M;
+
+	LUmatrixSeparation(LU, upptr, L, U);
+
+	ProductSparseMatrix(L, U, M);
+	// вычисление степени отличия значений
+	double diff = MatrixCompare(matrix, M);
+
+	printf("distinction value of matrix %f \n", diff);
+
+	if(matrix.N < 4000)
+	{
+		double condA, condMA;
+		condA = getConditionNumber(*matA);
+		printf("Condition number of matrix        A: %lf\n", condA);
+		condMA = getConditionNumber(L, U, *matA);
+		printf("Condition number of matrix M^-1 * A: %lf\n", condMA);
+	}
+
     cout << LU << endl;
     return 0;
 }
