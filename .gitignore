@@ -1,2 +1,5 @@
 *.sdf
 *.tlog
+*.suo
+*.opensdf
+*.ipch
