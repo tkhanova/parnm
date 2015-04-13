@@ -186,12 +186,14 @@
   <ItemGroup>
     <ClCompile Include="ilup.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="queue.cpp" />
     <ClCompile Include="sparseMatrixOperation.cpp" />
     <ClCompile Include="timer.cpp" />
     <ClCompile Include="validation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ilup.h" />
+    <ClInclude Include="queue.h" />
     <ClInclude Include="sparseMatrixOperation.h" />
     <ClInclude Include="timer.hpp" />
     <ClInclude Include="validation.h" />

@@ -6,6 +6,7 @@
 #include "validation.h"
 #include "conditionNumber.h"
 
+#define DEBUG_LEVEL 1
 int main(int argc, char **argv)
 {
   // разбор параметров

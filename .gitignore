@@ -14,3 +14,5 @@ ParallelNumericMethods/ILUP/Debug/
 ParallelNumericMethods/conditionNumber/Debug/
 ParallelNumericMethods/parser/Debug/
 *.opensdf
+*Release*
+*My Amplifier XE Results*

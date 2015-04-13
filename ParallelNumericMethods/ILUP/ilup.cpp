@@ -1,6 +1,9 @@
 #include "ilup.h"
+#include "queue.h"
 
 using namespace std;
+
+
 
 /**
 * API
@@ -32,7 +35,9 @@ int symbolicILUp(int p, int n, int * col, int * row,
 {
   int i, j, h, s, f;   // счетчики циклов 
   int jcol;            // и временные переменные
-  queue<int> Q;
+  //queue<int> Q;
+  MyQueue Q;
+  Q.init(2*p+1); //ћагическое число, но вроде больше она не разрастаетс€
   int * len;
   int * adj;
   int * visited;
@@ -54,8 +59,7 @@ int symbolicILUp(int p, int n, int * col, int * row,
     visited[i] = i;
     while(!(Q.empty()))
     {
-      h = Q.front();
-      Q.pop();
+      h = Q.pop();
       s = row[h];
       f = row[h + 1];
       for(j = s; j < f; j++)
@@ -66,7 +70,7 @@ int symbolicILUp(int p, int n, int * col, int * row,
           visited[jcol] = i;
           if((jcol > i) && (len[h]<p))
           {
-            Q.push(jcol);
+			  Q.push(jcol);
             len[jcol] = len[h] + 1;
           }
           if(jcol < i)
@@ -121,13 +125,12 @@ int symbolicILUp(int p, int n, int * col, int * row,
 
   for(i = 0; i < n; i++)
   {
-    Q.push(i);
+	  Q.push(i);
     len[i] = 0;
     visited[i] = i;
     while(!(Q.empty()))
     {
-      h = Q.front();
-      Q.pop();
+      h = Q.pop();
       s = row[h];
       f = row[h + 1];
       for(j = s; j < f; j++)
@@ -138,7 +141,7 @@ int symbolicILUp(int p, int n, int * col, int * row,
           visited[jcol] = i;
           if((jcol > i) && (len[h]<p))
           {
-            Q.push(jcol);
+			  Q.push(jcol);
             len[jcol] = len[h] + 1;
           }
           if(jcol < i)
