@@ -1,0 +1,16 @@
+*.suo
+*.sdf
+*.tlog
+*.obj
+*.user
+*.log
+*.pdb
+*.ipch
+*.filters
+*.ncb
+ParallelNumericMethods/Debug/
+ParallelNumericMethods/ILU/Debug/
+ParallelNumericMethods/ILUP/Debug/
+ParallelNumericMethods/conditionNumber/Debug/
+ParallelNumericMethods/parser/Debug/
+*.opensdf

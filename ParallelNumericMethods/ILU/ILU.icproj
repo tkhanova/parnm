@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<VisualStudioProject
+	ProjectType="Intel C++ Project"
+	Version="14.0"
+	Name="ILU"
+	ProjectGUID="{C43153AD-8197-4972-9E32-22F1992DBA4B}"
+	VCNestedProjectGUID="{0CF50F81-BC6C-4060-8594-8E6EAE312C06}"
+	VCNestedProjectFileName="ILU.vcproj"
+	>
+	<Configurations/>
+	<Files/>
+</VisualStudioProject>
