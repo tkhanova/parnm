@@ -18,6 +18,6 @@ void InitializeMatrix	(int N, int NZ, crsMatrix &mtx);
 void FreeMatrix(crsMatrix &mtx);
 
 // —оздает копию imtx в omtx, выдел€€ пам€ть под пол€ Value, Col и RowIndex
-void CopyMatrix(crsMatrix imtx, crsMatrix &omtx);
+void CopyMatrix(const crsMatrix& imtx, crsMatrix &omtx);
 
 #endif // __UTIL_H__

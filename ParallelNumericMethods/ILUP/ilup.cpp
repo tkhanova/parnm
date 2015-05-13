@@ -1,6 +1,7 @@
-#include "ilup.h"
+п»ї#include "ilup.h"
 #include "queue.h"
 #include <omp.h>
+#include "validation.h"
 using namespace std;
 
 
@@ -10,34 +11,34 @@ using namespace std;
 *   int symbolicILUp(int p, int n, int * col, int * row, 
 *                    int * lucol, int * lurow, double * &luval,
 *                    int * uptr, int &countL, int &countU);
-*   символьная фаза ILU(p)
+*   СЃРёРјРІРѕР»СЊРЅР°СЏ С„Р°Р·Р° ILU(p)
 * INPUT
-*   int    n     - размер матрицы
-*   матрица A
-*   int  * col   - индексы колонок матрицы a
-*   int  * row   - индексы начала строк матрицы a
-*   портрет матрицы LU
-*   int  * &lucol - индексы колонок матрицы lu
-*   int  * &lurow - индексы начала строк матрицы lu
-*   double * &luval - значения матрицы
-*   int  * uptr  - индексы диагональных элементов
-*                  в массиве luval
+*   int    n     - СЂР°Р·РјРµСЂ РјР°С‚СЂРёС†С‹
+*   РјР°С‚СЂРёС†Р° A
+*   int  * col   - РёРЅРґРµРєСЃС‹ РєРѕР»РѕРЅРѕРє РјР°С‚СЂРёС†С‹ a
+*   int  * row   - РёРЅРґРµРєСЃС‹ РЅР°С‡Р°Р»Р° СЃС‚СЂРѕРє РјР°С‚СЂРёС†С‹ a
+*   РїРѕСЂС‚СЂРµС‚ РјР°С‚СЂРёС†С‹ LU
+*   int  * &lucol - РёРЅРґРµРєСЃС‹ РєРѕР»РѕРЅРѕРє РјР°С‚СЂРёС†С‹ lu
+*   int  * &lurow - РёРЅРґРµРєСЃС‹ РЅР°С‡Р°Р»Р° СЃС‚СЂРѕРє РјР°С‚СЂРёС†С‹ lu
+*   double * &luval - Р·РЅР°С‡РµРЅРёСЏ РјР°С‚СЂРёС†С‹
+*   int  * uptr  - РёРЅРґРµРєСЃС‹ РґРёР°РіРѕРЅР°Р»СЊРЅС‹С… СЌР»РµРјРµРЅС‚РѕРІ
+*                  РІ РјР°СЃСЃРёРІРµ luval
 * OUTPUT
-*   double * luval - значения L и U разложенных матриц
-*   int &countL    - размер матрицы L
-*   int &countU    - размер матрицы U
+*   double * luval - Р·РЅР°С‡РµРЅРёСЏ L Рё U СЂР°Р·Р»РѕР¶РµРЅРЅС‹С… РјР°С‚СЂРёС†
+*   int &countL    - СЂР°Р·РјРµСЂ РјР°С‚СЂРёС†С‹ L
+*   int &countU    - СЂР°Р·РјРµСЂ РјР°С‚СЂРёС†С‹ U
 * RETURN
-*   возвращается код ошибки
+*   РІРѕР·РІСЂР°С‰Р°РµС‚СЃСЏ РєРѕРґ РѕС€РёР±РєРё
 **/
 int symbolicILUp(int p, int n, int * col, int * row, 
                  int * &lucol, int * &lurow, double * &luval,
                  int * uptr, int &countL, int &countU)
 {
-  int h, s, f;   // счетчики циклов 
-  int jcol;            // и временные переменные
+  int h, s, f;   // СЃС‡РµС‚С‡РёРєРё С†РёРєР»РѕРІ 
+  int jcol;            // Рё РІСЂРµРјРµРЅРЅС‹Рµ РїРµСЂРµРјРµРЅРЅС‹Рµ
   //queue<int> Q;
   MyQueue Q;
-  Q.init(2*p+1); //Магическое число, но вроде больше она не разрастается
+  Q.init(2*p+1); //РњР°РіРёС‡РµСЃРєРѕРµ С‡РёСЃР»Рѕ, РЅРѕ РІСЂРѕРґРµ Р±РѕР»СЊС€Рµ РѕРЅР° РЅРµ СЂР°Р·СЂР°СЃС‚Р°РµС‚СЃСЏ
   int * len;
   int * adj;
   int * visited;
@@ -94,7 +95,8 @@ int symbolicILUp(int p, int n, int * col, int * row,
 	  s = row[i];
 	  f = row[i + 1];
 	  int j;
-	  for(j = s; (j < f) && (col[j] < i); j++);
+	  for(j = s; (j < f) && (col[j] < i); j++)
+		  ;
 	  uptr[i] = j;
 	  if(col[uptr[i]] != i)
 	  {
@@ -195,44 +197,122 @@ int symbolicILUp(int p, int n, int * col, int * row,
   return ILU_OK;
 }
 
+
+/**
+* API
+*   int symbolicILUpWithMultiplication(int p, crsMatrix& A, 
+*                    int * lucol, int * lurow, double * &luval,
+*                    int * uptr, int &countL, int &countU);
+*   СЃРёРјРІРѕР»СЊРЅР°СЏ С„Р°Р·Р° ILU(p)
+* INPUT
+*   int    n     - СЂР°Р·РјРµСЂ РјР°С‚СЂРёС†С‹
+*   РјР°С‚СЂРёС†Р° A
+*   int  * col   - РёРЅРґРµРєСЃС‹ РєРѕР»РѕРЅРѕРє РјР°С‚СЂРёС†С‹ a
+*   int  * row   - РёРЅРґРµРєСЃС‹ РЅР°С‡Р°Р»Р° СЃС‚СЂРѕРє РјР°С‚СЂРёС†С‹ a
+*   РїРѕСЂС‚СЂРµС‚ РјР°С‚СЂРёС†С‹ LU
+*   int  * &lucol - РёРЅРґРµРєСЃС‹ РєРѕР»РѕРЅРѕРє РјР°С‚СЂРёС†С‹ lu
+*   int  * &lurow - РёРЅРґРµРєСЃС‹ РЅР°С‡Р°Р»Р° СЃС‚СЂРѕРє РјР°С‚СЂРёС†С‹ lu
+*   double * &luval - Р·РЅР°С‡РµРЅРёСЏ РјР°С‚СЂРёС†С‹
+*   int  * uptr  - РёРЅРґРµРєСЃС‹ РґРёР°РіРѕРЅР°Р»СЊРЅС‹С… СЌР»РµРјРµРЅС‚РѕРІ
+*                  РІ РјР°СЃСЃРёРІРµ luval
+* OUTPUT
+*   double * luval - Р·РЅР°С‡РµРЅРёСЏ L Рё U СЂР°Р·Р»РѕР¶РµРЅРЅС‹С… РјР°С‚СЂРёС†
+*   int &countL    - СЂР°Р·РјРµСЂ РјР°С‚СЂРёС†С‹ L
+*   int &countU    - СЂР°Р·РјРµСЂ РјР°С‚СЂРёС†С‹ U
+* RETURN
+*   РІРѕР·РІСЂР°С‰Р°РµС‚СЃСЏ РєРѕРґ РѕС€РёР±РєРё
+**/
+int symbolicILUpWithMultiplication(int p, crsMatrix& A, 
+	crsMatrix* LU, 
+	int * uptr)
+{
+	//crsMatrix* LU = new crsMatrix;
+	crsMatrix* tmp = new crsMatrix;
+	int n = A.N;
+	if (p==0)
+	{
+		CopyMatrix(A, *LU);
+	}
+	else
+	{
+		CopyMatrix(A, *tmp);
+		for (int i=1; i<=p; i++)
+		{
+			ProductSparseMatrix(A, *tmp, *LU);
+			crsMatrix* qqq = tmp;
+			tmp = LU;
+			LU = qqq;
+		}
+		delete LU;
+		LU = tmp;	
+	}
+
+	//fill uptr - index of diagonal elements
+	for(int i = 0; i < n; i++)
+	{
+		int	s = LU->RowIndex[i];
+		int f = LU->RowIndex[i + 1];
+		int j;
+		for(j = s; (j < f) && (LU->Col[j] < i); j++)
+			;
+		uptr[i] = j;
+		
+		if(LU->Col[uptr[i]] != i)
+		{
+			return -(i + 1);
+		}
+	}
+
+	//lucol = LU->Col;
+	//lurow = LU->RowIndex;
+//	luval = LU->Value;
+
+
+	return ILU_OK;
+}
+
 /**
 * API
 *   int numericalILUp(int n, double * a, int * col, int * row, 
 *                     int * lucol, int * lurow, int * uptr,
 *                     double * luval);
-*   численная фаза ILU(p)
+*   С‡РёСЃР»РµРЅРЅР°СЏ С„Р°Р·Р° ILU(p)
 * INPUT
-*   int    n     - размер матрицы
-*   double * a   - не нулевые элементы
-*   int  * col   - индексы колонок матрицы a
-*   int  * row   - индексы начала строк матрицы a
-*   int  * lucol - индексы колонок матрицы lu
-*   int  * lurow - индексы начала строк матрицы lu
-*   int  * uptr  - индексы диагональных элементов
-*                  в массиве luval
+*   int    n     - СЂР°Р·РјРµСЂ РјР°С‚СЂРёС†С‹
+*   double * a   - РЅРµ РЅСѓР»РµРІС‹Рµ СЌР»РµРјРµРЅС‚С‹
+*   int  * col   - РёРЅРґРµРєСЃС‹ РєРѕР»РѕРЅРѕРє РјР°С‚СЂРёС†С‹ a
+*   int  * row   - РёРЅРґРµРєСЃС‹ РЅР°С‡Р°Р»Р° СЃС‚СЂРѕРє РјР°С‚СЂРёС†С‹ a
+*   int  * lucol - РёРЅРґРµРєСЃС‹ РєРѕР»РѕРЅРѕРє РјР°С‚СЂРёС†С‹ lu
+*   int  * lurow - РёРЅРґРµРєСЃС‹ РЅР°С‡Р°Р»Р° СЃС‚СЂРѕРє РјР°С‚СЂРёС†С‹ lu
+*   int  * uptr  - РёРЅРґРµРєСЃС‹ РґРёР°РіРѕРЅР°Р»СЊРЅС‹С… СЌР»РµРјРµРЅС‚РѕРІ
+*                  РІ РјР°СЃСЃРёРІРµ luval
 * OUTPUT
-*   double * luval - значения L и U разложенных матриц
+*   double * luval - Р·РЅР°С‡РµРЅРёСЏ L Рё U СЂР°Р·Р»РѕР¶РµРЅРЅС‹С… РјР°С‚СЂРёС†
 * RETURN
-*   возвращается код ошибки
-*   0    - разложение выполнено успешно
-*   -(n + 1) - номер строки где на диагонале 0
+*   РІРѕР·РІСЂР°С‰Р°РµС‚СЃСЏ РєРѕРґ РѕС€РёР±РєРё
+*   0    - СЂР°Р·Р»РѕР¶РµРЅРёРµ РІС‹РїРѕР»РЅРµРЅРѕ СѓСЃРїРµС€РЅРѕ
+*   -(n + 1) - РЅРѕРјРµСЂ СЃС‚СЂРѕРєРё РіРґРµ РЅР° РґРёР°РіРѕРЅР°Р»Рµ 0
 **/
-int numericalILUp(int n, double * a, int * col, int * row, 
+int numericalILUp(int p, int n, double * a, int * col, int * row, 
                   int * lucol, int * lurow, int * uptr,
-                  double * luval)
+                  double * luval, int NZ)
 {
-  int j1, j2;     // граница текущей строки
-  int jrow;       // номер текущего столбца
-  int k, j, jj;   // счетчики циклов+
+	bool USE_LEVELS = true;
+  int j1, j2;     // РіСЂР°РЅРёС†Р° С‚РµРєСѓС‰РµР№ СЃС‚СЂРѕРєРё
+  int jrow;       // РЅРѕРјРµСЂ С‚РµРєСѓС‰РµРіРѕ СЃС‚РѕР»Р±С†Р°
+  int k, j, jj;   // СЃС‡РµС‚С‡РёРєРё С†РёРєР»РѕРІ+
   int *iw = NULL;
   int jw;
   double t1;
 
   iw = new int[n];
+  
+  int* levels = new int [NZ];
 
   memset(iw, 0, n * sizeof(int));
+  memset(levels, 0, NZ * sizeof(int));
 
-  //копирование исходной матрицы
+  //РєРѕРїРёСЂРѕРІР°РЅРёРµ РёСЃС…РѕРґРЅРѕР№ РјР°С‚СЂРёС†С‹
   j = 0;
   for(k = 0; k < row[n]; k++)
   {
@@ -247,7 +327,7 @@ int numericalILUp(int n, double * a, int * col, int * row,
   }
 
 
-  for(k = 0; k < n; k++)
+  for(k = 0; k < n; k++) //for i = 2 to N do
   {
     j1 = lurow[k];
     j2 = lurow[k + 1];
@@ -255,20 +335,40 @@ int numericalILUp(int n, double * a, int * col, int * row,
     {
       iw[lucol[j]] = j;
     }
-    for(j = j1; (j < j2) && (lucol[j] < k); j++)
+    for(j = j1; (j < j2) && (lucol[j] < k); j++) //for k = 1 to i - 1 and (i, k)  N (| A|p+1) with lev(aik) <= p do
     {
+		if (USE_LEVELS)
+		{
+			if (levels[j]>p) //with lev(aik) <= p
+				continue;
+		}
+
       jrow = lucol[j];
-      t1 = luval[j] / luval[uptr[jrow]];
+      t1 = luval[j] / luval[uptr[jrow]]; //aik = aik/akk
       luval[j] = t1;
-      for(jj = uptr[jrow]+1; jj < lurow[jrow + 1]; jj++)
-      {
+	  for(jj = uptr[jrow]+1; jj < lurow[jrow + 1]; jj++) //for j = k + 1 to N and (i, j) в€€ N (| A|p+1)
+	  {
         jw = iw[lucol[jj]];
         if(jw != 0)
         {
-          luval[jw] = luval[jw] - t1 * luval[jj];
+          luval[jw] = luval[jw] - t1 * luval[jj]; //aij = aij в€’ aik*akj
+
+		  if (USE_LEVELS)
+		  {
+			  levels[jw] = min(levels[jw], levels[j] + levels[jj] + 1);  //lev(aij ) = min(lev(aij ), lev(aik) + lev(akj ) + 1)
+		  }
         }
       }
     }
+
+
+	if (USE_LEVELS)
+		for(j = j1; (j < j2); j++)//for j = 2 to N do
+		{
+			if (levels[j]>p) //if lev(aij ) > p then
+				luval[j] = 0; //aij = 0
+		}
+
     jrow = lucol[j];
     if((jrow != k) || (fabs(luval[j]) < EPSILON))
     {
@@ -281,6 +381,7 @@ int numericalILUp(int n, double * a, int * col, int * row,
   }
 
   delete [] iw;
+  delete[] levels;
   if(k < n)
     return -(k+1);
   return 0;

@@ -33,6 +33,12 @@
 int symbolicILUp(int p, int n, int * col, int * row, 
                  int * &lucol, int * &lurow, double * &luval,
                  int * uptr, int &countL, int &countU);
+
+
+int symbolicILUpWithMultiplication(int p, crsMatrix& A, 
+	crsMatrix* LU, 
+	int * uptr);
+
 /**
  * API
  *   int numericalILUp(int n, double * a, int * col, int * row, 
@@ -55,6 +61,6 @@ int symbolicILUp(int p, int n, int * col, int * row,
  *   0    - разложение выполнено успешно
  *   -(n + 1) - номер строки где на диагонале 0
  **/
-int numericalILUp(int n, double * a, int * col, int * row, 
+int numericalILUp(int p, int n, double * a, int * col, int * row, 
                   int * lucol, int * lurow, int * uptr,
-                  double * luval);
+                  double * luval, int NZ);

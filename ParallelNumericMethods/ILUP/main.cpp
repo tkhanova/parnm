@@ -69,11 +69,23 @@ int main(int argc, char **argv)
     printf("\n\n############### ILU(%d) ################\n", p);
     time->reset();
     time->start();
-    symbolicILUp(p, matA->N, matA->Col, matA->RowIndex, 
-                 lu.Col, lu.RowIndex, lu.Value,
-                 uptr, countL, countU);
-    lu.N = matA->N;
-    lu.NZ = countL + countU;
+
+	if (false)
+	{
+		symbolicILUp(p, matA->N, matA->Col, matA->RowIndex, 
+			lu.Col, lu.RowIndex, lu.Value,
+			uptr, countL, countU);
+		lu.N = matA->N;
+		lu.NZ = countL + countU;
+	}
+	if (true)
+	{
+		symbolicILUpWithMultiplication(p, *matA, 
+			&lu,
+			uptr);
+	}
+
+
     time->stop();
     if(error != ILU_OK)
     {
@@ -87,8 +99,8 @@ int main(int argc, char **argv)
     time->start();
     
     // неполное LU разложение
-    error = numericalILUp(matA->N, matA->Value, matA->Col, matA->RowIndex,
-      lu.Col, lu.RowIndex, uptr, lu.Value);
+    error = numericalILUp(p, matA->N, matA->Value, matA->Col, matA->RowIndex,
+      lu.Col, lu.RowIndex, uptr, lu.Value, matA->NZ);
     time->stop();
 
     printf("ILU factorization time: %f\n", time->getElapsed());
